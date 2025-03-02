@@ -1,0 +1,441 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResNet-18 Image Classifier</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --secondary-color: #a5b4fc;
+            --dark-color: #1e293b;
+            --light-color: #f8fafc;
+            --accent-color: #f43f5e;
+        }
+        
+        body {
+            background-color: #f3f4f6;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .app-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+        
+        .app-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: var(--dark-color);
+        }
+        
+        .app-header h1 {
+            font-weight: 700;
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .app-card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            border: none;
+            overflow: hidden;
+        }
+        
+        .app-card-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 1.25rem;
+            position: relative;
+        }
+        
+        .app-card-header::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            right: 0;
+            height: 20px;
+            background: white;
+            border-radius: 50% 50% 0 0;
+        }
+        
+        .app-card-header h5 {
+            font-weight: 600;
+            margin-bottom: 0;
+        }
+        
+        .app-card-body {
+            padding: 1.5rem;
+        }
+        
+        .custom-btn {
+            background: var(--primary-color);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(99, 102, 241, 0.25);
+            transition: all 0.3s ease;
+        }
+        
+        .custom-btn:hover {
+            background: #4f46e5;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px rgba(99, 102, 241, 0.3);
+        }
+        
+        .custom-input {
+            border: 2px solid #e2e8f0;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .custom-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+        }
+        
+        .preview-container {
+            max-height: 300px;
+            display: flex;
+            justify-content: center;
+            margin: 1rem 0;
+        }
+        
+        .preview-image {
+            max-height: 300px;
+            max-width: 100%;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .loading {
+            display: none;
+            padding: 2rem 0;
+        }
+        
+        .prediction-card {
+            display: none;
+            transition: all 0.3s ease;
+            margin-top: 1.5rem;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 1.5rem;
+        }
+        
+        .result-label {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            background: #f1f5f9;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .feedback-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .like-btn {
+            background: #22c55e;
+        }
+        
+        .like-btn:hover {
+            background: #16a34a;
+        }
+        
+        .dislike-btn {
+            background: #ef4444;
+        }
+        
+        .dislike-btn:hover {
+            background: #dc2626;
+        }
+        
+        .octopus-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .octopus {
+            max-width: 100%;
+            transition: all 0.3s ease;
+        }
+        
+        .octopus-message {
+            position: absolute;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 0.5rem 1rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: none;
+            font-weight: 600;
+        }
+        
+        .octopus-message::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 10px 10px 0;
+            border-style: solid;
+            border-color: white transparent;
+        }
+        
+        .jump {
+            animation: jump 0.5s ease 3;
+        }
+        
+        @keyframes jump {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+        
+        .prediction-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            background: #f8fafc;
+            transition: all 0.3s ease;
+        }
+        
+        .prediction-item:hover {
+            background: #f1f5f9;
+        }
+        
+        .prediction-probability {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        
+        .top-prediction {
+            background: var(--accent-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="app-header">
+            <h1>ResNet-18 Image Classifier</h1>
+            <p class="text-muted">Upload any image and get instant octopus-powered classification</p>
+        </div>
+        
+        <div class="row g-4">
+            <!-- Octopus Column -->
+            <div class="col-md-4 d-flex justify-content-center align-items-center">
+                <div class="octopus-container">
+                    <div class="octopus-message">Yay!</div>
+                    <img id="octopus" src="/static/happy.png" alt="Happy octopus" class="octopus">
+                </div>
+            </div>
+            
+            <!-- Main Content Column -->
+            <div class="col-md-8">
+                <div class="app-card">
+                    <div class="app-card-header">
+                        <h5>Upload an image to classify</h5>
+                    </div>
+                    <div class="app-card-body">
+                        <form id="upload-form">
+                            <div class="mb-3">
+                                <input class="form-control custom-input" type="file" id="image-upload" accept="image/*">
+                            </div>
+                            <div class="preview-container">
+                                <img id="preview" class="preview-image" src="" alt="" style="display: none;">
+                            </div>
+                            <button type="submit" class="btn btn-primary custom-btn w-100">
+                                <i class="bi bi-search me-2"></i>Classify Image
+                            </button>
+                        </form>
+                        
+                        <div class="text-center loading" id="loading">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p>Analyzing your image...</p>
+                        </div>
+                        
+                        <div class="prediction-card" id="prediction-results">
+                            <h5 class="mb-3">Classification Results</h5>
+                            <div class="result-label">Top prediction: <span id="top-prediction" class="ms-2"></span></div>
+                            
+                            <div class="feedback-buttons">
+                                <button id="like-btn" class="btn like-btn text-white">
+                                    <i class="bi bi-hand-thumbs-up me-1"></i>Correct!
+                                </button>
+                                <button id="dislike-btn" class="btn dislike-btn text-white">
+                                    <i class="bi bi-hand-thumbs-down me-1"></i>Wrong
+                                </button>
+                            </div>
+                            
+                            <h6 class="mt-4 mb-3">All Predictions</h6>
+                            <div id="predictions-list">
+                                <!-- Will be filled by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('upload-form');
+            const imageUpload = document.getElementById('image-upload');
+            const preview = document.getElementById('preview');
+            const predictionResults = document.getElementById('prediction-results');
+            const topPrediction = document.getElementById('top-prediction');
+            const predictionsList = document.getElementById('predictions-list');
+            const loading = document.getElementById('loading');
+            const likeBtn = document.getElementById('like-btn');
+            const dislikeBtn = document.getElementById('dislike-btn');
+            const octopus = document.getElementById('octopus');
+            const octopusMessage = document.querySelector('.octopus-message');
+            
+            // Preview image
+            imageUpload.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        preview.src = e.target.result;
+                        preview.style.display = 'block';
+                    }
+                    reader.readAsDataURL(file);
+                    predictionResults.style.display = 'none';
+                    
+                    // Reset octopus state
+                    octopus.src = '/static/happy.png';
+                    octopus.classList.remove('jump');
+                    octopusMessage.style.display = 'none';
+                }
+            });
+            
+            // Handle feedback buttons
+            likeBtn.addEventListener('click', function() {
+                octopus.src = '/static/happy.png';
+                octopus.classList.add('jump');
+                octopusMessage.textContent = 'Yay!';
+                octopusMessage.style.display = 'block';
+                
+                // Remove jump class after animation ends
+                setTimeout(function() {
+                    octopus.classList.remove('jump');
+                    
+                    // Hide message after a delay
+                    setTimeout(function() {
+                        octopusMessage.style.display = 'none';
+                    }, 2000);
+                }, 1500);
+            });
+            
+            dislikeBtn.addEventListener('click', function() {
+                octopus.src = '/static/sad.png';
+                octopusMessage.textContent = 'I failed you...';
+                octopusMessage.style.display = 'block';
+                
+                // Hide message after a delay
+                setTimeout(function() {
+                    octopusMessage.style.display = 'none';
+                }, 3000);
+            });
+            
+            // Handle form submission
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData();
+                const file = imageUpload.files[0];
+                
+                if (!file) {
+                    alert('Please select an image first');
+                    return;
+                }
+                
+                formData.append('file', file);
+                
+                // Show loading spinner
+                loading.style.display = 'block';
+                predictionResults.style.display = 'none';
+                
+                fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Hide loading spinner
+                    loading.style.display = 'none';
+                    
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+                    
+                    // Show results
+                    topPrediction.textContent = data.prediction;
+                    
+                    // Clear previous predictions
+                    predictionsList.innerHTML = '';
+                    
+                    // Add top 5 predictions
+                    data.top_predictions.forEach((pred, index) => {
+                        const predItem = document.createElement('div');
+                        predItem.className = 'prediction-item';
+                        
+                        const predName = document.createElement('div');
+                        predName.textContent = pred.class;
+                        
+                        const predProb = document.createElement('div');
+                        predProb.className = index === 0 ? 'prediction-probability top-prediction' : 'prediction-probability';
+                        predProb.textContent = (pred.probability * 100).toFixed(1) + '%';
+                        
+                        predItem.appendChild(predName);
+                        predItem.appendChild(predProb);
+                        predictionsList.appendChild(predItem);
+                    });
+                    
+                    predictionResults.style.display = 'block';
+                })
+                .catch(error => {
+                    loading.style.display = 'none';
+                    console.error('Error details:', error);
+                    alert('An error occurred: ' + error);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
